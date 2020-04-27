@@ -51,9 +51,11 @@ If you would like to run both steps together in a pipeline you can do so using u
 python _01_GOF_sims.py -p data/Downtown_parameters.csv -t data/Downtown_ts.csv -o Downtown | python _02_munge_chains.py -o "-" -P Downtown
 ```
 
+## OTTAWA calculaiton
+
 Ottawa data is stored using `OTT` prefix. If you would like to run Ottawa data:
-```diff
-+ python _01_GOF_sims.py -p data/OTT_parameters.csv -t data/OTT_ts.csv -o OTT | python _02_munge_chains.py -o "-" -P OTT
+```bash
+python _01_GOF_sims.py -p data/OTT_parameters.csv -t data/OTT_ts.csv -o OTT | python _02_munge_chains.py -o "-" -P OTT
 ```
 The script takes about 10 minutes to run on my machine -- with the fan going.
 The output directory is shown in the terminal. In the `/data` folder with `OTT` prefix.
