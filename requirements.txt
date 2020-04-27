@@ -1,3 +1,5 @@
 ConfigArgParse
 gitpython
 seaborn
+pandas
+numpy
