@@ -3,4 +3,4 @@ __pycache__/
 *.pkl
 .DS_Store
 output/*
-!output/
+!output/*OTT
