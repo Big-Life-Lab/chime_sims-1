@@ -1,1 +1,0 @@
-{"my_config": null, "prefix": null, "parameters": "data/OTT_parameters.csv", "ts": "data/OTT_ts.csv", "n_chains": 8, "n_iters": 5000, "fit_penalty": false, "penalty": 0.05, "sample_obs": false, "out": "OTT", "as_of": 0, "verbose": false}
