@@ -25,16 +25,20 @@ def sir(y, alpha, beta, gamma, nu, N):
 
     scale = N / (Sn + En + In + Rn)
     return Sn * scale, En * scale, In * scale, Rn * scale
+  
 
-
-def reopenfn(day, reopen_day=60, reopen_speed=0.1):
+def reopenfn(day, reopen_day=60, reopen_speed=0.1,sd_max = 1):
     """Starting on `reopen_day`, reduce contact restrictions
     by `reopen_speed`*100%.
     """
+    sd_max = 1 - sd_max
     if day < reopen_day:
         return 1.0
     else:
-        return (1 - reopen_speed) ** (day - reopen_day)
+        ret = (1-reopen_speed)**(day-reopen_day)
+        if ret < sd_max: 
+            ret = sd_max
+        return ret
 
 
 # Run the SIR model forward in time
@@ -53,6 +57,7 @@ def sim_sir(
     logistic_x0,
     reopen_day=1000,
     reopen_speed=0.0,
+    sd_max = 1,
 ):
     N = S + E + I + R
     s, e, i, r = [S], [E], [I], [R]
@@ -60,7 +65,7 @@ def sim_sir(
         y = S, E, I, R
         # evaluate logistic
         sd = logistic(logistic_L, logistic_k, logistic_x0, x=day)
-        sd *= reopenfn(day, reopen_day, reopen_speed)
+        sd *= reopenfn(day, reopen_day, reopen_speed, sd_max= sd_max)
         beta_t = beta * (1 - sd)
         S, E, I, R = sir(y, alpha, beta_t, gamma, nu, N)
         s.append(S)
@@ -121,7 +126,7 @@ def compute_census(projection_admits_series, mean_los):
     return np.array(census[1:])
 
 
-def SIR_from_params(p_df):
+def SIR_from_params(p_df, sd_max = 1):
     """
     This function takes the output from the qdraw function
     """
@@ -184,6 +189,7 @@ def SIR_from_params(p_df):
         logistic_x0=logistic_x0 + offset,
         reopen_day=reopen_day,
         reopen_speed=reopen_speed,
+        sd_max = sd_max,
     )
 
     arrs = {}
