@@ -31,7 +31,6 @@ def reopenfn(day, reopen_day=60, reopen_speed=0.1,sd_max = 1):
     """Starting on `reopen_day`, reduce contact restrictions
     by `reopen_speed`*100%.
     """
-    sd_max = 1 - sd_max
     if day < reopen_day:
         return 1.0
     else:
