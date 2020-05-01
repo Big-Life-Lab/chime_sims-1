@@ -3,5 +3,5 @@ __pycache__/
 *.pkl
 .DS_Store
 output/*
-!output/*OTT
-.vscode
+!output/
+*.egg-info

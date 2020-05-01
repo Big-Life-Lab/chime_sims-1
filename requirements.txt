@@ -1,5 +1,7 @@
 ConfigArgParse
 gitpython
 seaborn
-pandas
 numpy
+pandas
+gvar
+lsqfit
