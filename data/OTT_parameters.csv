@@ -10,10 +10,22 @@ mkt_share,1,constant,,,Hospital Market Share (%)
 region_pop,1000000,constant,,,Regional Population
 incubation_days,5.0,gamma,9.514379271000001,0.513980244,Days from exposure to infectiousness
 recovery_days,7.0,gamma,9.833457434,1.642265575,Days from infection to recovery
-logistic_k,2,gamma,3.018953794,1.22738215,logistic growth rate
-logistic_x0,0.0,gamma,6.407435434,2.859728136,logistic days from beginning of time series to middle of logistic
-logistic_L,1.0,beta,2.0,3.0,logistic depth of social distancing
+logistic_k,1.0,gamma,4.018953794,0.22738215,logistic growth rate
+logistic_x0,14.0,gamma,6.407435434,2.859728136,logistic days from beginning of time series to middle of logistic
+logistic_L,0.5,beta,2.0,3.0,logistic depth of social distancing
 nu,2.5,gamma,93.95521690000001,0.02634306,Networked contact structure power-law exponent
 beta,0.33206426,beta,5.0,10.0,SEIR beta parameter (force of infection)
 hosp_capacity,,constant,,,Hospital Bed Capacity
 vent_capacity,,constant,,,Ventilator Capacity
+"","","","","",""
+"","","","","",""
+"","","","","",""
+"","","","","",""
+"","","","","",""
+"","","","","",""
+"","","","","",""
+"","","","","",""
+"","","","","",""
+"","","","","",""
+"","","","","",""
+"","","","","",""
