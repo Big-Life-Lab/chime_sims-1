@@ -35,7 +35,7 @@ def reopenfn(day, reopen_day=60, reopen_speed=0.1,sd_max = 1):
         return 1.0
     else:
         ret = (1-reopen_speed)**(day-reopen_day)
-        if ret < sd_max: 
+        if ret > sd_max: 
             ret = sd_max
         return ret
 
@@ -64,7 +64,8 @@ def sim_sir(
         y = S, E, I, R
         # evaluate logistic
         sd = logistic(logistic_L, logistic_k, logistic_x0, x=day)
-        sd *= reopenfn(day, reopen_day, reopen_speed, sd_max= sd_max)
+        curr_max = sd_max/logistic_L
+        sd *= reopenfn(day, reopen_day, reopen_speed, sd_max= curr_max)
         beta_t = beta * (1 - sd)
         S, E, I, R = sir(y, alpha, beta_t, gamma, nu, N)
         s.append(S)
@@ -101,6 +102,7 @@ def qdraw(qvec, p_df):
             out = dict(
                 param=p_df.param.iloc[i],
                 val=getattr(sps, p_df.distribution.iloc[i]).ppf(*p),
+                #sps.beta.ppf()
             )
             # does scipy not have a function to get the density from the quantile?
             p_pdf = (out["val"],) + p[1:]
