@@ -35,7 +35,7 @@ def reopenfn(day, reopen_day=60, reopen_speed=0.1,sd_max = 1):
         return 1.0
     else:
         ret = (1-reopen_speed)**(day-reopen_day)
-        if ret < sd_max: 
+        if ret <sd_max: 
             ret = sd_max
         return ret
 
@@ -57,13 +57,17 @@ def sim_sir(
     reopen_day=1000,
     reopen_speed=0.0,
     sd_max = 1,
+    base_sd = False
 ):
     N = S + E + I + R
     s, e, i, r = [S], [E], [I], [R]
     for day in range(n_days):
         y = S, E, I, R
         # evaluate logistic
-        sd = logistic(logistic_L, logistic_k, logistic_x0, x=day)
+        if base_sd:
+            sd = logistic_L
+        else:
+            sd = logistic(logistic_L, logistic_k, logistic_x0, x=day)
         curr_max = sd_max/logistic_L
         sd *= reopenfn(day, reopen_day, reopen_speed, sd_max= curr_max)
         beta_t = beta * (1 - sd)
@@ -127,10 +131,16 @@ def compute_census(projection_admits_series, mean_los):
     return np.array(census[1:])
 
 
-def SIR_from_params(p_df, sd_max = 1):
+def SIR_from_params(p_df, sd_max = 1, base_sd = False):
     """
     This function takes the output from the qdraw function
     """
+    logistic_L = 0
+    if base_sd == False:
+        logistic_L = float(p_df.val.loc[p_df.param == "logistic_L"])
+    else:
+        logistic_L = base_sd
+        base_sd = True
     n_hosp = int(p_df.val.loc[p_df.param == "n_hosp"])
     incubation_days = float(p_df.val.loc[p_df.param == "incubation_days"])
     hosp_prop = float(p_df.val.loc[p_df.param == "hosp_prop"])
@@ -143,7 +153,6 @@ def SIR_from_params(p_df, sd_max = 1):
     mkt_share = float(p_df.val.loc[p_df.param == "mkt_share"])
     region_pop = float(p_df.val.loc[p_df.param == "region_pop"])
     logistic_k = float(p_df.val.loc[p_df.param == "logistic_k"])
-    logistic_L = float(p_df.val.loc[p_df.param == "logistic_L"])
     logistic_x0 = float(p_df.val.loc[p_df.param == "logistic_x0"])
     beta = float(
         p_df.val.loc[p_df.param == "beta"]
@@ -191,6 +200,7 @@ def SIR_from_params(p_df, sd_max = 1):
         reopen_day=reopen_day,
         reopen_speed=reopen_speed,
         sd_max = sd_max,
+        base_sd = base_sd,
     )
 
     arrs = {}
