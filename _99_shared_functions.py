@@ -35,7 +35,7 @@ def reopenfn(day, reopen_day=60, reopen_speed=0.1,sd_max = 1):
         return 1.0
     else:
         ret = (1-reopen_speed)**(day-reopen_day)
-        if ret > sd_max: 
+        if ret < sd_max: 
             ret = sd_max
         return ret
 
