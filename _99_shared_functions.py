@@ -27,7 +27,7 @@ def sir(y, alpha, beta, gamma, nu, N):
     return Sn * scale, En * scale, In * scale, Rn * scale
   
 
-def reopenfn(day, reopen_day=60, reopen_speed=0.1,sd_max = 1):
+def reopenfn(day, reopen_day=60, reopen_speed=0.1,sd_percent_change = 0):
     """Starting on `reopen_day`, reduce contact restrictions
     by `reopen_speed`*100%.
     """
@@ -35,8 +35,8 @@ def reopenfn(day, reopen_day=60, reopen_speed=0.1,sd_max = 1):
         return 1.0
     else:
         ret = (1-reopen_speed)**(day-reopen_day)
-        if ret <sd_max: 
-            ret = sd_max
+        if sd_percent_change != 1: 
+            ret = sd_percent_change
         return ret
 
 
@@ -56,20 +56,15 @@ def sim_sir(
     logistic_x0,
     reopen_day=1000,
     reopen_speed=0.0,
-    sd_max = 1,
-    base_sd = False
+    sd_percent_change=1,
 ):
     N = S + E + I + R
     s, e, i, r = [S], [E], [I], [R]
     for day in range(n_days):
         y = S, E, I, R
         # evaluate logistic
-        if base_sd:
-            sd = logistic_L
-        else:
-            sd = logistic(logistic_L, logistic_k, logistic_x0, x=day)
-        curr_max = sd_max/logistic_L
-        sd *= reopenfn(day, reopen_day, reopen_speed, sd_max= curr_max)
+        sd = logistic(logistic_L, logistic_k, logistic_x0, x=day)
+        sd *= reopenfn(day, reopen_day, reopen_speed, sd_percent_change=sd_percent_change)
         beta_t = beta * (1 - sd)
         S, E, I, R = sir(y, alpha, beta_t, gamma, nu, N)
         s.append(S)
@@ -131,16 +126,10 @@ def compute_census(projection_admits_series, mean_los):
     return np.array(census[1:])
 
 
-def SIR_from_params(p_df, sd_max = 1, base_sd = False):
+def SIR_from_params(p_df, sd_percent_change = 1):
     """
     This function takes the output from the qdraw function
     """
-    logistic_L = 0
-    if base_sd == False:
-        logistic_L = float(p_df.val.loc[p_df.param == "logistic_L"])
-    else:
-        logistic_L = base_sd
-        base_sd = True
     n_hosp = int(p_df.val.loc[p_df.param == "n_hosp"])
     incubation_days = float(p_df.val.loc[p_df.param == "incubation_days"])
     hosp_prop = float(p_df.val.loc[p_df.param == "hosp_prop"])
@@ -154,6 +143,7 @@ def SIR_from_params(p_df, sd_max = 1, base_sd = False):
     region_pop = float(p_df.val.loc[p_df.param == "region_pop"])
     logistic_k = float(p_df.val.loc[p_df.param == "logistic_k"])
     logistic_x0 = float(p_df.val.loc[p_df.param == "logistic_x0"])
+    logistic_L = float(p_df.val.loc[p_df.param == "logistic_L"])
     beta = float(
         p_df.val.loc[p_df.param == "beta"]
     )  # get beta directly rather than via doubling time
@@ -199,8 +189,7 @@ def SIR_from_params(p_df, sd_max = 1, base_sd = False):
         logistic_x0=logistic_x0 + offset,
         reopen_day=reopen_day,
         reopen_speed=reopen_speed,
-        sd_max = sd_max,
-        base_sd = base_sd,
+        sd_percent_change=sd_percent_change,
     )
 
     arrs = {}
