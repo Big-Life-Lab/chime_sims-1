@@ -35,8 +35,15 @@ def reopenfn(day, reopen_day=60, reopen_speed=0.1,sd_percent_change = 0):
         return 1.0
     else:
         ret = (1-reopen_speed)**(day-reopen_day)
-        if sd_percent_change != 1: 
-            ret = sd_percent_change
+        if sd_percent_change != 0:
+            if sd_percent_change > 1:
+                ret = (1+reopen_speed)**(day-reopen_day)
+                if ret > sd_percent_change:
+                    ret = sd_percent_change
+            elif sd_percent_change < 1:
+                ret = (1-reopen_speed)**(day-reopen_day)
+                if ret< sd_percent_change:
+                    ret = sd_percent_change
         return ret
 
 
@@ -56,7 +63,7 @@ def sim_sir(
     logistic_x0,
     reopen_day=1000,
     reopen_speed=0.0,
-    sd_percent_change=1,
+    sd_percent_change=0,
 ):
     N = S + E + I + R
     s, e, i, r = [S], [E], [I], [R]
@@ -126,7 +133,7 @@ def compute_census(projection_admits_series, mean_los):
     return np.array(census[1:])
 
 
-def SIR_from_params(p_df, sd_percent_change = 1):
+def SIR_from_params(p_df, sd_percent_change = 0):
     """
     This function takes the output from the qdraw function
     """
