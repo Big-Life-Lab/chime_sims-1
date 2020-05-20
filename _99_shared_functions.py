@@ -45,7 +45,7 @@ def reopen_wrapper(dfi, day, speed, cap):
     p_df = pd.concat([p_df, pd.DataFrame(ro)])
     p_df
     SIR_ii = SIR_from_params(p_df)
-    return SIR_ii['arr_stoch'][:,3]
+    return SIR_ii['arr_stoch']
 
 
 def scale(arr, mu, sig):

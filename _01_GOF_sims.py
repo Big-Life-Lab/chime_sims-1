@@ -399,6 +399,11 @@ def main():
         default = 1.0
     )
     p.add(
+        "--reopen_caps",
+        nargs='+',
+        help="List of different reopenings to allow"
+    )
+    p.add(
         "--forecast_change_prior_mean",
         type=float,
         help="prior on how much the census will change over the next week, in percent",
@@ -436,6 +441,7 @@ def main():
     reopen_day = options.reopen_day
     reopen_speed = options.reopen_speed
     reopen_cap = options.reopen_cap
+    reopen_caps = options.reopen_caps
     forecast_priors = dict(mu = options.forecast_change_prior_mean,
                            sig = options.forecast_change_prior_sd)
     save_chains = options.save_chains
@@ -635,32 +641,36 @@ def main():
         )
 
     # reopening
+    if reopen_caps is None: 
+        reopen_caps=[reopen_day]
     colors = ['blue', 'green', 'orange', 'red', 'yellow', 'cyan']
-    reopen_day_gap = math.ceil((200-reopen_day)/len(colors))
-    reopen_days = np.arange(reopen_day, 199, reopen_day_gap)
-    qmats = []    
-    for day in reopen_days:
-        pool = mp.Pool(mp.cpu_count())
-        reop = pool.starmap(reopen_wrapper, [(df.iloc[i], day, reopen_speed, reopen_cap) for i in range(df.shape[0])])
-        pool.close()
-        reop = np.stack(reop)
-        reopq = np.quantile(reop, [.05, .25, .5, .75, .95], axis = 0)
-        qmats.append(reopq)
-    dates = pd.date_range(f"{first_day}", periods=201, freq="d")
-    fig = plt.figure()
-    for i in range(len(reopen_days)):
-        plt.plot_date(dates, qmats[i][2, :], "-", 
-                      label=f"re-open after {reopen_days[i]} days",
-                      color = colors[i])
-        plt.fill_between(x = dates,
-                         y1 = qmats[i][1,:], y2 = qmats[i][3,:], 
-                         alpha = .2, color = colors[i])
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-    plt.title(f"Reopening scenario, {int(reopen_speed*100)}% per day up to {int(reopen_cap*100)}% social distancing")
-    fig.autofmt_xdate()
-    fig.savefig(path.join(f"{figdir}", f"{prefix}reopening_scenarios.pdf"))
+    for cap in reopen_caps:
+        cap = float(cap)
+        reopen_day_gap = math.ceil((200-reopen_day)/len(colors))
+        reopen_days = np.arange(reopen_day, 199, reopen_day_gap)
+        qmats = []    
+        for day in reopen_days:
+            pool = mp.Pool(mp.cpu_count())
+            reop = pool.starmap(reopen_wrapper, [(df.iloc[i], day, reopen_speed, cap) for i in range(df.shape[0])])
+            pool.close()
+            reop = np.stack(reop)
+            reopq = np.quantile(reop, [.05, .25, .5, .75, .95], axis = 0)
+            qmats.append(reopq)
+        dates = pd.date_range(f"{first_day}", periods=201, freq="d")
+        fig = plt.figure()
+        for i in range(len(reopen_days)):
+            plt.plot_date(dates, qmats[i][2, :,3], "-", 
+                        label=f"re-open after {reopen_days[i]} days",
+                        color = colors[i])
+            plt.fill_between(x = dates,
+                            y1 = qmats[i][1,:,3], y2 = qmats[i][3,:,3], 
+                            alpha = .2, color = colors[i])
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.title(f"Reopening scenario, {int(reopen_speed*100)}% per day up to {int(cap*100)}% social distancing")
+        fig.autofmt_xdate()
+        fig.savefig(path.join(f"{figdir}", f"{prefix}{cap}reopening_scenarios.pdf"))
      
     
 
