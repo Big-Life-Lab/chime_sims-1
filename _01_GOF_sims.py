@@ -279,7 +279,10 @@ def do_chains(n_iters,
     df = pd.concat(chains, ignore_index=True)
     return df
 
-
+def create_csv_export_dataframe (arrq, column, name, dates, howfar, suffix):
+    dataframe_dictionary = {'date': dates, f'{name}_5_{suffix}':arrq[0,:howfar,column], f'{name}_95_{suffix}':arrq[4,:howfar,column], f'{name}_median_{suffix}':arrq[2,:howfar, column]}
+    dataframe = pd.DataFrame(data=dataframe_dictionary)
+    return dataframe
 
 def main():
     # if __name__ == "__main__":
@@ -421,9 +424,19 @@ def main():
         help="store the chains?  It'll make it take longer, as there is a lot of info in them.",
     )
     p.add(
+        "--save_reopening_csv",
+        action="store_true",
+        help="Save the reopening projections into a combined csv"
+    )
+    p.add(
         "--ignore_vent",
         action="store_true",
         help="don't fit to vent, multiply the likelihood by zero",
+    )
+    p.add(
+        "--one_reopen",
+        action="store_true",
+        help="Only simulate on reopen day"
     )
 
     options = p.parse_args()
@@ -445,7 +458,9 @@ def main():
     forecast_priors = dict(mu = options.forecast_change_prior_mean,
                            sig = options.forecast_change_prior_sd)
     save_chains = options.save_chains
+    save_reopening_csv = options.save_reopening_csv
     ignore_vent = options.ignore_vent
+    one_reopen = options.one_reopen
 
     if flexible_beta:
         print("doing flexible beta")
@@ -642,12 +657,15 @@ def main():
 
     # reopening
     if reopen_caps is None: 
-        reopen_caps=[reopen_day]
+        reopen_caps=[reopen_cap]
     colors = ['blue', 'green', 'orange', 'red', 'yellow', 'cyan']
+    final_dataframe = pd.DataFrame()
     for cap in reopen_caps:
         cap = float(cap)
         reopen_day_gap = math.ceil((200-reopen_day)/len(colors))
         reopen_days = np.arange(reopen_day, 199, reopen_day_gap)
+        if one_reopen:
+            reopen_days = [reopen_day]
         qmats = []    
         for day in reopen_days:
             pool = mp.Pool(mp.cpu_count())
@@ -665,13 +683,26 @@ def main():
             plt.fill_between(x = dates,
                             y1 = qmats[i][1,:,3], y2 = qmats[i][3,:,3], 
                             alpha = .2, color = colors[i])
+            tmp_sufix = f'{int(cap*100)}%Reduction_{reopen_days[i]}'
+            hosp_census = create_csv_export_dataframe(qmats[i], 3, "hosp_census", dates, 201, tmp_sufix)
+            vent_census = create_csv_export_dataframe(qmats[i], 5, "vent_census", dates, 201, tmp_sufix)
+            hosp_admits = create_csv_export_dataframe(qmats[i], 0, "hosp_admits", dates, 201, tmp_sufix)
+            vent_admits = create_csv_export_dataframe(qmats[i], 2, "vent_admits", dates, 201, tmp_sufix)
+            tmp_combine_census = pd.merge(hosp_census,vent_census, on = "date")
+            tmp_combine_admits = pd.merge(hosp_admits,vent_admits, on = "date")
+            tmp_combine = pd.merge(tmp_combine_census,tmp_combine_admits, on = "date")
+            if final_dataframe.size == 0:
+                final_dataframe = tmp_combine
+            else:
+                final_dataframe = pd.merge(final_dataframe, tmp_combine, on = "date")   
         plt.legend()
         plt.grid(True)
         plt.tight_layout()
         plt.title(f"Reopening scenario, {int(reopen_speed*100)}% per day up to {int(cap*100)}% social distancing")
         fig.autofmt_xdate()
         fig.savefig(path.join(f"{figdir}", f"{prefix}{cap}reopening_scenarios.pdf"))
-     
+    if save_reopening_csv:   
+        final_dataframe.to_csv(path.join(f"{outdir}", "reopen.csv"))
     
 
     mk_projection_tables(df, first_day, outdir)
