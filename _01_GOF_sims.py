@@ -390,6 +390,11 @@ def main():
         default = 8675309
     )
     p.add(
+        "--reopen_from_today",
+        action="store_true",
+        help="reopen_day becomes number of days from last ts entry"
+    )
+    p.add(
         "--reopen_speed",
         type=float,
         help="how fast to reopen",
@@ -461,6 +466,7 @@ def main():
     save_reopening_csv = options.save_reopening_csv
     ignore_vent = options.ignore_vent
     one_reopen = options.one_reopen
+    reopen_from_today = options.reopen_from_today
 
     if flexible_beta:
         print("doing flexible beta")
@@ -471,6 +477,9 @@ def main():
     print(dir)
 
     census_ts, params = get_inputs(options)
+
+    if reopen_from_today:
+        reopen_day = census_ts.shape[0] + reopen_day
 
     if census_ts is None or params is None:
         print("You must specify either --prefix or --parameters and --ts")
@@ -683,7 +692,13 @@ def main():
             plt.fill_between(x = dates,
                             y1 = qmats[i][1,:,3], y2 = qmats[i][3,:,3], 
                             alpha = .2, color = colors[i])
-            tmp_sufix = f'{int(cap*100)}%Reduction_{reopen_days[i]}'
+            if one_reopen:
+                if cap == 1:
+                    tmp_sufix = f'current'
+                else:
+                    tmp_sufix = f'reduction_{math.ceil((1-cap)*100)}'
+            else:
+                tmp_sufix = f'{int(cap*100)}%Reduction_{reopen_days[i]}'
             hosp_census = create_csv_export_dataframe(qmats[i], 3, "hosp_census", dates, 201, tmp_sufix)
             vent_census = create_csv_export_dataframe(qmats[i], 5, "vent_census", dates, 201, tmp_sufix)
             hosp_admits = create_csv_export_dataframe(qmats[i], 0, "hosp_admits", dates, 201, tmp_sufix)
