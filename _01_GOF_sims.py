@@ -667,11 +667,14 @@ def main():
     # reopening
     if reopen_caps is None: 
         reopen_caps=[reopen_cap]
-    colors = ['blue', 'green', 'orange', 'red', 'yellow', 'cyan']
+    colors = ['blue', 'green', 'orange', 'red', 'yellow', 'cyan', 'purple', 'brown', 'grey']
     final_dataframe = pd.DataFrame()
     for cap in reopen_caps:
         cap = float(cap)
-        reopen_day_gap = math.ceil((200-reopen_day)/len(colors))
+        if reopen_day >= 199:
+            reopen_day_gap = 25
+        else:
+            reopen_day_gap = math.ceil((200-reopen_day)/len(colors))
         reopen_days = np.arange(reopen_day, 199, reopen_day_gap)
         if one_reopen:
             reopen_days = [reopen_day]
